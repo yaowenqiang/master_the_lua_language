@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nvim --headless -c \"lua print\\('osv:'..type\\(require\\('osv'\\).launch\\)..' dap:'..type\\(require\\('dap'\\).continue\\)\\)\" +qakkjkkjjjj)",
+      "Bash(nvim --headless -c \"lua print\\(vim.inspect\\(require\\('dap'\\).configurations.lua\\)\\)\" +qa)",
+      "Bash(grep -v \"^$\")",
+      "Bash(nvim --headless \"+qa\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(nvim --headless \"+lua local ok, m = pcall\\(require, 'lspconfig'\\); print\\('require lspconfig ok:', ok\\)\")",
+      "Bash(pkill -f \"pcall\\(require, 'lspconfig'\\)\")",
+      "Bash(nvim --headless \"+lua local ok = pcall\\(require, 'lspconfig'\\); print\\('require-ok:' .. tostring\\(ok\\)\\)\" \"+qa\")",
+      "Bash(nvim --headless myscript.lua \"+lua vim.defer_fn\\(function\\(\\) local cs = vim.lsp.get_clients\\({bufnr = 0}\\); print\\('attached:' .. #cs\\); for _, c in ipairs\\(cs\\) do print\\('server:' .. c.name\\) end; vim.cmd\\('qa!'\\) end, 8000\\)\")",
+      "Bash(nvim --headless myscript.lua \"+lua vim.defer_fn\\(function\\(\\) local buf = vim.api.nvim_get_current_buf\\(\\) print\\('ft:' .. vim.bo[buf].filetype\\) local ok, cfg = pcall\\(function\\(\\) return vim.lsp.config['lua_ls'] end\\) print\\('cfg-ok:' .. tostring\\(ok\\) .. ' cmd:' .. tostring\\(cfg and cfg.cmd and cfg.cmd[1]\\)\\) print\\('all-clients:' .. #vim.lsp.get_clients\\(\\)\\) for _, c in ipairs\\(vim.lsp.get_clients\\(\\)\\) do print\\('client:' .. c.name\\) end vim.cmd\\('qa!'\\) end, 10000\\)\")",
+      "Bash(nvim --headless '+lua assert\\(require \"nvchad.cmp\", \"nvchad.cmp failed\"\\); assert\\(require \"nvchad.configs.cmp\", \"configs.cmp failed\"\\); print\\(\"FIX OK\"\\)' +qa)",
+      "Bash(nvim --headless '+lua assert\\(require \"nvchad.cmp\"\\); print\\(\"nvchad.cmp OK\"\\)' +qa)",
+      "Bash(nvim --headless '+Lazy! load nvim-cmp' '+lua assert\\(require \"nvchad.configs.cmp\"\\); print\\(\"configs.cmp OK\"\\)' +qa)"
+    ]
+  }
+}
