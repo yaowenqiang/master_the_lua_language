@@ -38,3 +38,5 @@ nvim myscript.lua
 
 注意：nvim-dap 会自动读 `.vscode/launch.json`。旧的 LuaPanda 配置已改名为
 `.vscode/launch.json.lupanda.bak`，不要恢复它，否则会污染调试配置列表。
+
+> google color picker

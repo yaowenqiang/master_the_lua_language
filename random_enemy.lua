@@ -1,0 +1,5 @@
+math.randomseed(os.time())
+random_enemy_x = math.random(0,800)
+random_enemy_y = math.random(0,600)
+print("Enemy pos : (" .. random_enemy_x .. "," .. random_enemy_y .. ")")
+print(random_enemy_y)

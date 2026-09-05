@@ -1,0 +1,5 @@
+print(arg[0], arg[1])
+local file = io.open(arg[1], "r")
+local text = file:read("all")
+file:close()
+print(text)
