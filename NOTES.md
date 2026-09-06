@@ -46,3 +46,8 @@ nvim myscript.lua
 > pairs() returns key-value pairs, witout order
 
 > ipairs() returns index-value pairs, with order.
+
+> curl -L -R -O https://www.lua.org/ftp/lua-5.5.1.tar.gz
+
+> gcc src/*.c -o main
+
