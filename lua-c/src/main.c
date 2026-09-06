@@ -1,185 +1,122 @@
+#include <SDL2/SDL.h>
 #include <stdio.h>
 #include "../lib/lua/src/lua.h"
 #include "../lib/lua/src/lualib.h"
 #include "../lib/lua/src/lauxlib.h"
 
-void lua_example_dofile(void)
-{
-    lua_State *L = luaL_newstate();
-    luaL_openlibs(L);
+#define FALSE 0
+#define TRUE 1
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
 
-    if (luaL_dofile(L, "./scripts/factorial.lua") != LUA_OK)
+#define FPS 30
+#define FRAME_TIME_LENGTH (1000 / FPS)
+
+SDL_Window *window = NULL;
+SDL_Renderer *renderer = NULL;
+int is_running = TRUE;
+int last_frame_time = 0;
+
+struct player
+{
+    float x;
+    float y;
+    float width;
+    float height;
+} player;
+
+int initialize_window(void)
+{
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
-        fprintf(stderr, "Error: %s\n", lua_tostring(L, -1));
-        lua_close(L);
+        fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
+        return FALSE;
     }
-
-    lua_close(L);
-}
-
-void lua_example_getvar(void)
-{
-    lua_State *L = luaL_newstate();
-    luaL_dostring(L, "x = 42");
-    lua_getglobal(L, "x");
-    lua_Number some_var_in_c = lua_tonumber(L, -1);
-    printf("some_var_in_c = %d\n", (int)some_var_in_c);
-    lua_close(L);
-}
-
-void lua_example_stack(void)
-{
-    lua_State *L = luaL_newstate();
-    lua_pushnumber(L, 206); // stack position 1 or stack -3
-    lua_pushnumber(L, 306); // stack position 2 or stack -2
-    lua_pushnumber(L, 406); // stack position 3 ,or stack -1
-
-    lua_Number element;
-    element = lua_tonumber(L, -1);
-    printf("The last added element in position 3 of the stack is %d\n", (int)element);
-
-    lua_remove(L, 2); // This should remove 306 from the stack
-
-    element = lua_tonumber(L, 2);
-    printf("The element in position 2 of the stack is now %d\n", (int)element);
-    lua_close(L);
-}
-void lua_example_call_lua_function(void)
-{
-    lua_State *L = luaL_newstate();
-    if (luaL_dofile(L, "./scripts/pythagoras.lua") != LUA_OK)
+    window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_BORDERLESS);
+    if (!window)
     {
-        luaL_error(L, "Error: %s\n", lua_tostring(L, -1));
-        lua_close(L);
-        return;
+        fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
+        return FALSE;
     }
-    lua_getglobal(L, "pythagoras");
-    if (lua_isfunction(L, -1))
+    SDL_RaiseWindow(window);
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    if (!renderer)
     {
-        lua_pushnumber(L, 3);
-        lua_pushnumber(L, 4);
-        const int NUM_ARGS = 2;
-        const int NUM_RETURNS = 1;
+        fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
+        return FALSE;
+    }
+    return TRUE;
+}
 
-        if (lua_pcall(L, NUM_ARGS, NUM_RETURNS, 0) != LUA_OK)
+void process_input(void)
+{
+    SDL_Event event;
+    SDL_PollEvent(&event);
+    switch (event.type)
+    {
+    case SDL_QUIT: // close the windows
+        is_running = FALSE;
+        break;
+    case SDL_KEYDOWN:
+        if (event.key.keysym.sym == SDLK_ESCAPE)
         {
-            luaL_error(L, "Error: %s\n", lua_tostring(L, -1));
-            lua_close(L);
-            return;
+            is_running = FALSE;
         }
-        lua_Number pythagoras_result = lua_tonumber(L, -1);
-        printf("The result of pythagoras(3, 4) is %f\n", (float)pythagoras_result);
+        break;
+    default:
+        break;
     }
-    lua_close(L);
-}
-int native_pythagoras(lua_State *L)
-{
-    lua_Number b = lua_tonumber(L, -1);
-    lua_Number a = lua_tonumber(L, -2);
-    lua_Number result = a * a + b * b;
-    lua_pushnumber(L, result);
-    return 1; // Number of return values
 }
 
-void lua_example_call_c_function(void)
+void update(void)
 {
-    lua_State *L = luaL_newstate();
+    while (!SDL_TICKS_PASSED(SDL_GetTicks(), last_frame_time + FRAME_TIME_LENGTH))
+        ;
+    last_frame_time = SDL_GetTicks();
 
-    lua_pushcfunction(L, native_pythagoras);
-    lua_setglobal(L, "native_pythagoras");
-    luaL_dofile(L, "./scripts/pythagoras_native.lua");
-    lua_getglobal(L, "pythagoras");
-    if (lua_isfunction(L, -1))
-    {
-        lua_pushnumber(L, 3);
-        lua_pushnumber(L, 4);
-        const int NUM_ARGS = 2;
-        const int NUM_RETURNS = 1;
-        lua_pcall(L, NUM_ARGS, NUM_RETURNS, 0);
-        lua_Number pythagoras_result = lua_tonumber(L, -1);
-        printf("The result of native pythagoras(3, 4) is %f\n", (float)pythagoras_result);
-    }
+    player.x += 1;
+    player.y += 1;
+}
+void render(void)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
 
-    lua_close(L);
+    // Render game objects here
+
+    SDL_Rect player_rect = {(int)player.x, (int)player.y, (int)player.width, (int)player.height};
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &player_rect);
+
+    SDL_RenderPresent(renderer);
 }
 
-typedef struct rectangle2d
+void setup(void)
 {
-    int x;
-    int y;
-    int width;
-    int height;
-} rectangle;
-
-int create_rectangle(lua_State *L)
-{
-    rectangle *rect = (rectangle *)lua_newuserdata(L, sizeof(rectangle));
-    rect->x = 0;
-    rect->y = 0;
-    rect->width = 0;
-    rect->height = 0;
-    return 1;
+    player.x = 20;
+    player.y = 20;
+    player.width = 10;
+    player.height = 10;
 }
 
-int change_rectangle_size(lua_State *L)
+void destroy_window(void)
 {
-    rectangle *rect = (rectangle *)lua_touserdata(L, -3);
-    rect->width = (int)lua_tonumber(L, -2);
-    rect->height = (int)lua_tonumber(L, -1);
-    return 0;
-}
-
-void lua_example_userdata(void)
-{
-    lua_State *L = luaL_newstate();
-    lua_pushcfunction(L, create_rectangle);
-    lua_setglobal(L, "crate_rectangle");
-
-    lua_pushcfunction(L, change_rectangle_size);
-    lua_setglobal(L, "change_rectangle_size");
-
-    luaL_dofile(L, "./scripts/rectangle.lua");
-    lua_getglobal(L, "square");
-    if (lua_isuserdata(L, -1))
-    {
-        rectangle *rect = (rectangle *)lua_touserdata(L, -1);
-        printf("We got back a rectangle from lua width %d and height %d\n", rect->width, rect->height);
-    }
-    else
-    {
-        printf("We did not get a rectangle userdata from lua\n");
-    }
-    lua_close(L);
-}
-void lua_example_table()
-{
-    lua_State *L = luaL_newstate();
-    if (luaL_dofile(L, "./scripts/configtable.lua") == LUA_OK)
-    {
-        lua_getglobal(L, "config_table");
-        if (lua_istable(L, -1))
-        {
-            lua_getfield(L, -1, "window_width");
-            printf("the window width defined in the lua table is %s\n", lua_tostring(L, -1));
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Error: %s\n", lua_tostring(L, -1));
-        lua_close(L);
-        return;
-    }
-    lua_close(L);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
 int main(int argc, char **argv)
 {
-    // lua_example_dofile();
-    // lua_example_getvar();
-    // lua_example_stack();
-    // lua_example_call_lua_function();
-    // lua_example_call_c_function();
-    // lua_example_userdata();
-    lua_example_table();
+    is_running = initialize_window();
+    setup();
+    while (is_running)
+    {
+        process_input();
+        update();
+        render();
+    }
+    destroy_window();
     return 0;
 }
