@@ -4,5 +4,5 @@ build:
 clean:
 	rm -f main
 
-run:
+run: build
 	./main
