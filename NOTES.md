@@ -51,3 +51,9 @@ nvim myscript.lua
 
 > gcc src/*.c -o main
 
+> Programming in Lua fourth edition
+
+> pico-8
+
+
+

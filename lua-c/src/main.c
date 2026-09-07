@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
+// #include <stdbool.h>
 #include "../lib/lua/src/lua.h"
 #include "../lib/lua/src/lualib.h"
 #include "../lib/lua/src/lauxlib.h"
@@ -16,6 +17,8 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 int is_running = TRUE;
 int last_frame_time = 0;
+
+lua_State *L;
 
 struct player
 {
@@ -71,12 +74,28 @@ void process_input(void)
 
 void update(void)
 {
+    last_frame_time = SDL_GetTicks();
     while (!SDL_TICKS_PASSED(SDL_GetTicks(), last_frame_time + FRAME_TIME_LENGTH))
         ;
+    float delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0f;
     last_frame_time = SDL_GetTicks();
 
-    player.x += 1;
-    player.y += 1;
+    // player.x += 100 * delta_time;
+    // player.y += 50 * delta_time;
+
+    lua_getglobal(L, "update");
+    if (lua_isfunction(L, -1))
+    {
+        lua_pushnumber(L, delta_time);
+        const int NUM_ARGS = 1;
+        const int NUM_RETURNS = 0;
+        if (lua_pcall(L, NUM_ARGS, NUM_RETURNS, 0) != LUA_OK)
+        {
+            fprintf(stderr, "Lua update error: %s\n", lua_tostring(L, -1));
+            lua_pop(L, 1); // pop error message
+            is_running = FALSE;
+        }
+    }
 }
 void render(void)
 {
@@ -107,9 +126,31 @@ void destroy_window(void)
     SDL_Quit();
 }
 
+int set_player_pos(lua_State *L)
+{
+    lua_Number x = lua_tonumber(L, -2);
+    lua_Number y = lua_tonumber(L, -1);
+    printf("Setting player position to (%f, %f)\n", x, y);
+    player.x = (int)x;
+    player.y = (int)y;
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
+    L = luaL_newstate();
+    luaL_openlibs(L);
+    if (luaL_dofile(L, "./scripts/playermovement.lua") != LUA_OK)
+    {
+        luaL_error(L, "Error loading script: %s", lua_tostring(L, -1));
+        return EXIT_FAILURE;
+    }
+
+    lua_pushcfunction(L, set_player_pos);
+    lua_setglobal(L, "set_player_pos");
+
     is_running = initialize_window();
+
     setup();
     while (is_running)
     {
